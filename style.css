@@ -1,0 +1,45 @@
+body {
+  margin: 0;
+  overflow: hidden; /* prevent scrollbars */
+}
+
+.warning-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    45deg,
+    #ffcc00 0px,
+    #ffcc00 40px,   /* Yellow stripe width */
+    #000000 40px,   /* Black starts immediately after yellow */
+    #000000 80px    /* Black stripe width */
+  );
+}
+
+/* Optional: ensure canvas is on top */
+canvas {
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+#p5_loading {
+  position: relative;
+  z-index: 10;             /* put it above the canvas */
+  color: #ffffff;          /* white text */
+  background: rgba(0,0,0,0.6); /* optional: dark semi-transparent backplate for readability */
+  padding: 20px;
+  text-align: center;
+}
+
+/* Make sure the <pre> inside uses the same colour */
+#p5_loading pre {
+  color: #ffffff;
+  font-size: 16px;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
