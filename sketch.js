@@ -6,7 +6,7 @@ let cnv;
 let pg;
 
 let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-let rotationAngle = 0; // radians, only used on iOS
+let rotationAngle = 0; // radians
 
 function preload() {
   bodyPose = ml5.bodyPose({ flipped: true });
@@ -25,13 +25,9 @@ function setup() {
   bodyPose.detectStart(video, gotPoses);
   connections = bodyPose.getSkeleton();
 
-  // ---- Auto-rotate for iOS ----
+  // ---- iOS: rotate skeleton 90° counter‑clockwise ----
   if (isIOS) {
-    // On iPhone in portrait, the video is rotated 90° clockwise.
-    // We counter-rotate by -90° (or +90° depending on device)
-    rotationAngle = -PI / 2; // adjust if needed
-    // If you want to detect orientation dynamically, you can use:
-    // updateRotation() as shown later, but -90 works for most.
+    rotationAngle = -PI / 2; // try PI/2 if it's the other way
   }
 }
 
@@ -40,7 +36,7 @@ function gotPoses(results) {
 }
 
 function draw() {
-  // Aspect-ratio calculation (unchanged)
+  // ---- Aspect ratio: fit 640x480 video into canvas ----
   let vidW = 640,
     vidH = 480;
   let vidAspect = vidW / vidH;
@@ -59,9 +55,19 @@ function draw() {
     offsetY = (height - drawH) / 2;
   }
 
+  // Draw the video upright
+  image(video, offsetX, offsetY, drawW, drawH);
+
+  // Clear the graphics layer
   pg.clear();
 
-  // ---- Draw skeleton onto pg ----
+  // ---- Rotate ONLY the skeleton inside pg ----
+  pg.push();
+  pg.translate(320, 240); // centre of 640×480
+  pg.rotate(rotationAngle);
+  pg.translate(-320, -240);
+
+  // Draw skeleton connections
   for (let i = 0; i < poses.length; i++) {
     let pose = poses[i];
     for (let j = 0; j < connections.length; j++) {
@@ -76,6 +82,7 @@ function draw() {
       }
     }
 
+    // Face box and label ("ART WORKER")
     let nose = pose.keypoints.find((k) => k.name === "nose");
     let leftEye = pose.keypoints.find((k) => k.name === "left_eye");
     let rightEye = pose.keypoints.find((k) => k.name === "right_eye");
@@ -90,7 +97,7 @@ function draw() {
       pg.noStroke();
       pg.textSize(36);
       pg.textAlign(CENTER, CENTER);
-      pg.text("艺术工人", x, y - h / 2 - 15);
+      pg.text("ART WORKER", x, y - h / 2 - 15); // <--- HERE
 
       pg.noFill();
       pg.stroke(0, 255, 0);
@@ -99,16 +106,13 @@ function draw() {
     }
   }
 
-  // ---- Draw video and overlay, rotated if on iOS ----
-  push();
-  translate(offsetX + drawW / 2, offsetY + drawH / 2);
-  if (isIOS) rotate(rotationAngle);
-  image(video, -drawW / 2, -drawH / 2, drawW, drawH);
-  image(pg, -drawW / 2, -drawH / 2, drawW, drawH);
-  pop();
+  pg.pop(); // restore pg coordinate system
+
+  // Draw the (now rotated) skeleton overlay, scaled to match the video
+  image(pg, offsetX, offsetY, drawW, drawH);
 }
 
-// ---- Window resize (keep) ----
+// ---- Handle window resize / orientation change ----
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
