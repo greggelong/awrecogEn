@@ -1,60 +1,388 @@
+<!DOCTYPE html>
 <html>
 
 <head>
-  <meta charset="UTF-8" />
-  <title>Art Worker Recognition</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
-  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
-  <div id="p5_loading" class="loadingclass">
-    <pre>
-       Please wait I am loading. . . . 
-       Vision model     lodiing . . .
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ART WORKER Recognition</title>
+    <style>
+        /* ---- Warning stripes (fixed background) ---- */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: repeating-linear-gradient(45deg,
+                    #ffcc00 0px,
+                    #ffcc00 40px,
+                    #000000 40px,
+                    #000000 80px);
+        }
 
-       ART WORKERS 
-       AI BOSS
-                          >>>>   >>>>>>>>>
-                           >>>>  ***  >>>>>
-                               >>>>>>
-一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一
-一一一一一一一一一一一下涌禾涌汗汗禾文涌泉一一一一一一一一一一一
-一一一一一一一一一涌禾禾文文文思禾汗文文禾文禾一一一一一一一一一
-一一一一一一一滴汗禾文文文文文文泉禾禾文文文禾滴一一一一一一一一
-一一一一一一滴滴汗文文文文文文文禾涌禾禾文文文禾滴一一一一一一一
-一一一一文滴滴涌禾文文文文文文文文禾禾涌文文文文禾文一一一一一一
-一一一一滴滴泉汗文文文文文文文文文文思禾禾文文文文汗一一一一一一
-一一一滴滴滴滴禾文文文文文文文文文文禾禾思文文文文禾涌一一一一一
-一一一滴滴滴泉禾文文文文文禾禾泉汗禾汗汗汗汗汗汗涌汗滴一一一一一
-一一一滴滴滴涌汗文文文禾思汗汗涌滴滴滴滴滴滴滴滴滴涌滴一一一一一
-一一一滴滴滴滴滴禾禾禾汗滴滴泉下土土一一土土下泉滴滴滴滴滴一一一
-一一一滴滴滴滴滴思汗滴下土一一一一一一一一一一一一土滴滴滴滴一一
-一一一滴滴滴泉思滴滴土一一一土土土土一一一一一一一一下滴滴滴下一
-一一一滴滴思滴文滴滴一一一滴禾泉滴滴滴一一一涌滴滴滴滴滴滴滴滴一
-一一土滴滴滴滴下滴滴一一一下一汗滴文一一一滴文土汗汗滴滴滴滴一一
-一一滴滴滴滴滴下滴涌一一一下滴土涌滴一一一滴汗滴文滴滴滴滴涌一一
-一滴滴滴滴滴滴下滴一一一一一一思下土一一一土土文文文滴滴土一一一
-滴滴滴滴滴滴滴文下一一一一一一一一一一一一一一一一一文一一一一一
-滴滴滴滴禾禾滴文文一一一一一一一一一一一一滴一一一一下一一一一一
-一滴滴滴文滴滴涌汗一一一一一一一一滴一一一一一一一一下一一一一一
-一一滴滴滴泉思滴土一一一一一一一一滴汗一滴一一一一一禾一一一一一
-一一一一文滴滴滴下一一一一一一一一一一一一一一一一一一一一一一一
-一一一一一滴文禾禾文一一一一一一一土思滴滴下一一一一一一一一一一
-一一一一一一滴思滴土一一一一一一土下文下文文涌一一文一一一一一一
-一一一一一一一滴滴涌文一一一一一一土滴滴滴禾一一一一一一一一一一
-一一一一一一一滴滴滴下泉一一一一一一一一一一一一一一一一一一一一
-一一一一一一一一滴滴滴下土一一一一一一一一一一土一一一一一一一一
-一一一一一一一一涌滴滴滴禾禾下滴土一一一一土泉一一一一一一一一一
-一一一一一一一一文滴滴滴滴滴滴滴文文泉滴滴滴思涌一一一一一一一一
-一一一一一一一一滴滴滴泉滴滴下下下一一一涌滴下下滴一一一一一一一
-一一一一一一一一一一一一一一一一土一一土滴文禾一土滴一一一一一一
-一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一一
-    </pre>
-  </div>
-  <link rel="stylesheet" type="text/css" href="style.css" />
+        /* ---- Container for the canvas (on top of stripes) ---- */
+        #container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: transparent;
+        }
+
+        /* ---- Loading overlay (animated) ---- */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.8s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #loading .ascii-art {
+            font-size: 14px;
+            white-space: pre;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #ffcc00;
+        }
+
+        #loading .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #ffcc00;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0% {
+                content: '';
+            }
+
+            25% {
+                content: '.';
+            }
+
+            50% {
+                content: '..';
+            }
+
+            75% {
+                content: '...';
+            }
+
+            100% {
+                content: '';
+            }
+        }
+    </style>
 </head>
 
 <body>
-  <div class="warning-background" style="width: 100vw; height: 100vh"></div>
-  <script src="sketch.js"></script>
+
+    <!-- Loading overlay (animated) -->
+    <div id="loading">
+        <div class="ascii-art">
+            <pre>
+   ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄ 
+  ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌
+  ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀▀▀ 
+  ▐░▌          ▐░▌       ▐░▌▐░▌       ▐░▌▐░▌          
+  ▐░█▄▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░█▄▄▄▄▄▄▄█░▌▐░▌          
+  ▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌          
+  ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ ▐░▌          
+  ▐░▌          ▐░▌          ▐░▌          ▐░▌          
+  ▐░▌          ▐░▌          ▐░▌          ▐░█▄▄▄▄▄▄▄▄▄ 
+  ▐░▌          ▐░▌          ▐░▌          ▐░░░░░░░░░░░▌
+  ▀▀            ▀▀            ▀▀            ▀▀▀▀▀▀▀▀▀▀▀ 
+      </pre>
+        </div>
+        <div style="font-size: 24px; color: #ffcc00; margin-bottom: 10px;">
+            ART WORKER <span class="loading-dots">loading</span>
+        </div>
+        <div style="font-size: 16px; color: #aaa;">
+            Loading AI model… please wait
+        </div>
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Canvas container -->
+    <div id="container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const loadingEl = document.getElementById('loading');
+
+            const video = document.createElement('video');
+            video.autoplay = true;
+            video.playsInline = true;
+            video.setAttribute('playsinline', '');
+            video.style.display = 'none';
+
+            let detector = null;
+            let poses = [];
+            let videoReady = false;
+            let videoWidth = 640, videoHeight = 480;
+            let rotationAngle = 0;
+            let mirror = true;
+
+            function isIOS() {
+                return /iPad|iPhone|iPod/.test(navigator.userAgent);
+            }
+
+            async function setupCamera() {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+                video.srcObject = stream;
+                await video.play();
+                videoWidth = video.videoWidth;
+                videoHeight = video.videoHeight;
+                if (isIOS()) {
+                    rotationAngle = -Math.PI / 2;
+                } else {
+                    rotationAngle = 0;
+                }
+            }
+
+            async function loadDetector() {
+                const model = poseDetection.SupportedModels.MoveNet;
+                const config = {
+                    modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
+                    enableSmoothing: false,
+                    minPoseScore: 0.25
+                };
+                detector = await poseDetection.createDetector(model, config);
+            }
+
+            function resizeCanvas() {
+                const container = document.getElementById('container');
+                const rect = container.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+            window.addEventListener('resize', resizeCanvas);
+
+            async function detectAndDraw() {
+                if (!detector || !videoReady) {
+                    requestAnimationFrame(detectAndDraw);
+                    return;
+                }
+
+                const detections = await detector.estimatePoses(video, {
+                    maxPoses: 10,
+                    flipHorizontal: false
+                });
+                poses = detections;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                let displayAspect = (rotationAngle === 0 || Math.abs(rotationAngle) === Math.PI)
+                    ? videoWidth / videoHeight
+                    : videoHeight / videoWidth;
+                const canvasAspect = canvas.width / canvas.height;
+                let drawW, drawH, offsetX, offsetY;
+                if (canvasAspect > displayAspect) {
+                    drawH = canvas.height;
+                    drawW = canvas.height * displayAspect;
+                    offsetX = (canvas.width - drawW) / 2;
+                    offsetY = 0;
+                } else {
+                    drawW = canvas.width;
+                    drawH = canvas.width / displayAspect;
+                    offsetX = 0;
+                    offsetY = (canvas.height - drawH) / 2;
+                }
+
+                ctx.save();
+                ctx.translate(offsetX + drawW / 2, offsetY + drawH / 2);
+                if (rotationAngle !== 0) {
+                    ctx.rotate(rotationAngle);
+                }
+                if (mirror) {
+                    ctx.scale(-1, 1);
+                }
+                const scaleX = drawW / videoWidth;
+                const scaleY = drawH / videoHeight;
+                ctx.scale(scaleX, scaleY);
+
+                // Draw video
+                ctx.drawImage(video, -videoWidth / 2, -videoHeight / 2, videoWidth, videoHeight);
+
+                // Connections
+                const connections = [
+                    ['left_shoulder', 'right_shoulder'],
+                    ['left_shoulder', 'left_elbow'],
+                    ['left_elbow', 'left_wrist'],
+                    ['right_shoulder', 'right_elbow'],
+                    ['right_elbow', 'right_wrist'],
+                    ['left_shoulder', 'left_hip'],
+                    ['right_shoulder', 'right_hip'],
+                    ['left_hip', 'right_hip'],
+                    ['left_hip', 'left_knee'],
+                    ['left_knee', 'left_ankle'],
+                    ['right_hip', 'right_knee'],
+                    ['right_knee', 'right_ankle'],
+                    ['nose', 'left_eye'],
+                    ['nose', 'right_eye'],
+                    ['left_eye', 'right_eye'],
+                    ['left_eye', 'left_ear'],
+                    ['right_eye', 'right_ear'],
+                    ['left_shoulder', 'nose'],
+                    ['right_shoulder', 'nose']
+                ];
+
+                const lineWidth = 6 / Math.min(scaleX, scaleY);
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = 'round';
+
+                // Store head positions for later text drawing (unmirrored)
+                const headPositions = [];
+
+                for (let i = 0; i < poses.length; i++) {
+                    const pose = poses[i];
+                    const keypoints = pose.keypoints;
+                    const kpMap = {};
+                    keypoints.forEach(kp => { kpMap[kp.name] = kp; });
+
+                    for (let [nameA, nameB] of connections) {
+                        const a = kpMap[nameA];
+                        const b = kpMap[nameB];
+                        if (a && b && a.score > 0.25 && b.score > 0.25) {
+                            ctx.beginPath();
+                            ctx.moveTo(a.x - videoWidth / 2, a.y - videoHeight / 2);
+                            ctx.lineTo(b.x - videoWidth / 2, b.y - videoHeight / 2);
+                            ctx.stroke();
+                        }
+                    }
+
+                    const nose = kpMap['nose'];
+                    const leftEye = kpMap['left_eye'];
+                    const rightEye = kpMap['right_eye'];
+                    if (nose && leftEye && rightEye &&
+                        nose.score > 0.25 && leftEye.score > 0.25 && rightEye.score > 0.25) {
+                        const cx = (leftEye.x + rightEye.x) / 2;
+                        const cy = (leftEye.y + rightEye.y) / 2;
+                        const eyeDist = Math.hypot(leftEye.x - rightEye.x, leftEye.y - rightEye.y);
+                        const w = eyeDist * 3;
+                        const h = w * 1.2;
+
+                        ctx.strokeStyle = '#00ff00';
+                        ctx.lineWidth = lineWidth;
+                        ctx.strokeRect(cx - videoWidth / 2 - w / 2, cy - videoHeight / 2 - h / 2, w, h);
+
+                        // Save for text
+                        headPositions.push({ cx, cy, w, h });
+                    }
+                }
+
+                ctx.restore();
+
+                // ---- Draw unmirrored text ----
+                for (let pos of headPositions) {
+                    const cx = pos.cx, cy = pos.cy, w = pos.w, h = pos.h;
+                    // Compute screen coordinates using the same transform we had earlier
+                    const cos = Math.cos(rotationAngle);
+                    const sin = Math.sin(rotationAngle);
+                    const mirrorFactor = mirror ? -1 : 1;
+                    const cxShift = cx - videoWidth / 2;
+                    const cyShift = cy - videoHeight / 2;
+                    const cxScaled = cxShift * scaleX;
+                    const cyScaled = cyShift * scaleY;
+                    const cxMirrored = mirrorFactor * cxScaled;
+                    const cyMirrored = cyScaled;
+                    const screenX = offsetX + drawW / 2 + (cxMirrored * cos - cyMirrored * sin);
+                    const screenY = offsetY + drawH / 2 + (cxMirrored * sin + cyMirrored * cos);
+                    const screenW = w * scaleX;
+                    const screenH = h * scaleY;
+
+                    ctx.fillStyle = '#ff0000';
+                    ctx.font = '36px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.fillText('ART WORKER', screenX, screenY - screenH / 2 - 10);
+                }
+
+                requestAnimationFrame(detectAndDraw);
+            }
+
+            async function init() {
+                try {
+                    await setupCamera();
+                    videoReady = true;
+                    await loadDetector();
+                    loadingEl.classList.add('hidden');
+                    resizeCanvas();
+                    detectAndDraw();
+                } catch (err) {
+                    console.error(err);
+                    loadingEl.innerHTML = `<pre>Error: ${err.message}</pre>`;
+                }
+            }
+
+            init();
+        })();
+    </script>
 </body>
 
 </html>
