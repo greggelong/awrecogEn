@@ -98,3 +98,7 @@ function draw() {
   // Draw the graphics layer with the same scaling/offset as the video
   image(pg, offsetX, offsetY, drawW, drawH);
 }
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
