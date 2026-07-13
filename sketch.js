@@ -5,6 +5,9 @@ let connections;
 let cnv;
 let pg;
 
+let isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+let rotationAngle = 0; // radians, only used on iOS
+
 function preload() {
   bodyPose = ml5.bodyPose({ flipped: true });
 }
@@ -21,16 +24,25 @@ function setup() {
 
   bodyPose.detectStart(video, gotPoses);
   connections = bodyPose.getSkeleton();
+
+  // ---- Auto-rotate for iOS ----
+  if (isIOS) {
+    // On iPhone in portrait, the video is rotated 90° clockwise.
+    // We counter-rotate by -90° (or +90° depending on device)
+    rotationAngle = -PI / 2; // adjust if needed
+    // If you want to detect orientation dynamically, you can use:
+    // updateRotation() as shown later, but -90 works for most.
+  }
 }
 
 function gotPoses(results) {
-  poses = results; // simple, no smoothing
+  poses = results;
 }
 
 function draw() {
-  // ---- ASPECT RATIO: fit 640x480 video into canvas without stretching ----
-  let vidW = 640;
-  let vidH = 480;
+  // Aspect-ratio calculation (unchanged)
+  let vidW = 640,
+    vidH = 480;
   let vidAspect = vidW / vidH;
   let cnvAspect = width / height;
   let drawW, drawH, offsetX, offsetY;
@@ -47,17 +59,11 @@ function draw() {
     offsetY = (height - drawH) / 2;
   }
 
-  // Draw video
-  image(video, offsetX, offsetY, drawW, drawH);
-
-  // Clear graphics layer
   pg.clear();
 
-  // ---- Draw skeleton from raw poses (original) ----
+  // ---- Draw skeleton onto pg ----
   for (let i = 0; i < poses.length; i++) {
     let pose = poses[i];
-
-    // Skeleton connections
     for (let j = 0; j < connections.length; j++) {
       let pointAIndex = connections[j][0];
       let pointBIndex = connections[j][1];
@@ -70,13 +76,11 @@ function draw() {
       }
     }
 
-    // Face box and label
     let nose = pose.keypoints.find((k) => k.name === "nose");
     let leftEye = pose.keypoints.find((k) => k.name === "left_eye");
     let rightEye = pose.keypoints.find((k) => k.name === "right_eye");
 
     if (nose && leftEye && rightEye) {
-      // Use raw keypoints directly
       let x = (leftEye.x + rightEye.x) / 2;
       let y = (leftEye.y + rightEye.y) / 2;
       let w = dist(leftEye.x, leftEye.y, rightEye.x, rightEye.y) * 3;
@@ -84,9 +88,9 @@ function draw() {
 
       pg.fill(255, 0, 0);
       pg.noStroke();
-      pg.textSize(26);
+      pg.textSize(36);
       pg.textAlign(CENTER, CENTER);
-      pg.text("ART WORKER", x, y - h / 2 - 15);
+      pg.text("艺术工人", x, y - h / 2 - 15);
 
       pg.noFill();
       pg.stroke(0, 255, 0);
@@ -95,10 +99,16 @@ function draw() {
     }
   }
 
-  // Draw the graphics layer with the same scaling/offset as the video
-  image(pg, offsetX, offsetY, drawW, drawH);
+  // ---- Draw video and overlay, rotated if on iOS ----
+  push();
+  translate(offsetX + drawW / 2, offsetY + drawH / 2);
+  if (isIOS) rotate(rotationAngle);
+  image(video, -drawW / 2, -drawH / 2, drawW, drawH);
+  image(pg, -drawW / 2, -drawH / 2, drawW, drawH);
+  pop();
 }
 
+// ---- Window resize (keep) ----
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
