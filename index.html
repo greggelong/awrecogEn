@@ -144,6 +144,687 @@
 </head>
 
 <body>
+    <!-- ═══ PAYWALL OVERLAY (password only) ═══ -->
+    <style>
+        /* ── PAYWALL STYLES (scoped) ── */
+        .paywall-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 20px;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            font-family: 'Courier New', 'PingFang SC', monospace;
+        }
+
+        .paywall-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .warning-card {
+            max-width: 600px;
+            width: 100%;
+            background: #14141f;
+            border-radius: 8px;
+            padding: 36px 32px 40px;
+            border: 2px solid #f7c948;
+            box-shadow: 0 0 20px rgba(247, 201, 72, 0.1), 0 30px 80px rgba(0, 0, 0, 0.9);
+            position: relative;
+            overflow: hidden;
+            animation: cardFlicker 3s infinite alternate;
+        }
+
+        @keyframes cardFlicker {
+            0% {
+                border-color: #f7c948;
+                box-shadow: 0 0 20px rgba(247, 201, 72, 0.1), 0 30px 80px rgba(0, 0, 0, 0.9);
+            }
+
+            20% {
+                border-color: #ff4d4d;
+                box-shadow: 0 0 30px rgba(255, 77, 77, 0.15), 0 30px 80px rgba(0, 0, 0, 0.9);
+            }
+
+            40% {
+                border-color: #4dc9ff;
+                box-shadow: 0 0 30px rgba(77, 201, 255, 0.15), 0 30px 80px rgba(0, 0, 0, 0.9);
+            }
+
+            60% {
+                border-color: #f7c948;
+                box-shadow: 0 0 20px rgba(247, 201, 72, 0.1), 0 30px 80px rgba(0, 0, 0, 0.9);
+            }
+
+            80% {
+                border-color: #ff4d4d;
+                box-shadow: 0 0 40px rgba(255, 77, 77, 0.2), 0 30px 80px rgba(0, 0, 0, 0.9);
+            }
+
+            100% {
+                border-color: #f7c948;
+                box-shadow: 0 0 20px rgba(247, 201, 72, 0.1), 0 30px 80px rgba(0, 0, 0, 0.9);
+            }
+        }
+
+        .warning-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.15) 2px, rgba(0, 0, 0, 0.15) 4px);
+            pointer-events: none;
+            z-index: 10;
+            animation: scanlineMove 6s linear infinite;
+        }
+
+        @keyframes scanlineMove {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(100%);
+            }
+        }
+
+        .warning-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(45deg, rgba(255, 77, 77, 0.02) 0px, rgba(255, 77, 77, 0.02) 12px, rgba(77, 201, 255, 0.04) 12px, rgba(77, 201, 255, 0.04) 24px, rgba(247, 201, 72, 0.02) 24px, rgba(247, 201, 72, 0.02) 36px);
+            pointer-events: none;
+            z-index: 0;
+            animation: stripesGlitch 0.8s infinite alternate;
+        }
+
+        @keyframes stripesGlitch {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            25% {
+                transform: translate(-10px, 5px) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(10px, -5px) rotate(-1deg);
+            }
+
+            75% {
+                transform: translate(-5px, 10px) rotate(0.5deg);
+            }
+
+            100% {
+                transform: translate(5px, -10px) rotate(-0.5deg);
+            }
+        }
+
+        .warning-card>* {
+            position: relative;
+            z-index: 2;
+        }
+
+        .warning-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .warning-icon {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            border-radius: 4px;
+            background: linear-gradient(145deg, #f7c948, #b8860b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #0a0a0f;
+            box-shadow: 0 0 0 2px rgba(247, 201, 72, 0.3), 0 4px 20px rgba(247, 201, 72, 0.15);
+            font-family: 'Courier New', monospace;
+            transform: skewX(-3deg);
+            animation: glitchIcon 1.5s infinite alternate;
+        }
+
+        @keyframes glitchIcon {
+            0% {
+                transform: skewX(-3deg) scale(1);
+                background: linear-gradient(145deg, #f7c948, #b8860b);
+            }
+
+            20% {
+                transform: skewX(3deg) scale(0.95);
+                background: linear-gradient(145deg, #ff4d4d, #b8860b);
+            }
+
+            40% {
+                transform: skewX(-5deg) scale(1.05);
+                background: linear-gradient(145deg, #4dc9ff, #b8860b);
+            }
+
+            60% {
+                transform: skewX(2deg) scale(0.98);
+                background: linear-gradient(145deg, #f7c948, #b8860b);
+            }
+
+            80% {
+                transform: skewX(-2deg) scale(1.02);
+                background: linear-gradient(145deg, #ff4d4d, #b8860b);
+            }
+
+            100% {
+                transform: skewX(-3deg) scale(1);
+                background: linear-gradient(145deg, #f7c948, #b8860b);
+            }
+        }
+
+        .warning-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #f7c948;
+            text-shadow: 2px 0 #ff4d4d, -2px 0 #4dc9ff, 0 0 30px rgba(247, 201, 72, 0.1);
+            line-height: 1.2;
+            animation: glitchText 2s infinite alternate;
+        }
+
+        @keyframes glitchText {
+            0% {
+                text-shadow: 2px 0 #ff4d4d, -2px 0 #4dc9ff;
+                transform: skew(0deg);
+            }
+
+            10% {
+                text-shadow: -3px 0 #ff4d4d, 3px 0 #4dc9ff;
+                transform: skew(2deg);
+            }
+
+            20% {
+                text-shadow: 2px 0 #ff4d4d, -2px 0 #4dc9ff;
+                transform: skew(-2deg);
+            }
+
+            30% {
+                text-shadow: 4px 0 #ff4d4d, -4px 0 #4dc9ff;
+                transform: skew(0deg);
+            }
+
+            40% {
+                text-shadow: -2px 0 #ff4d4d, 2px 0 #4dc9ff;
+                transform: skew(1deg);
+            }
+
+            50% {
+                text-shadow: 2px 0 #ff4d4d, -2px 0 #4dc9ff;
+                transform: skew(-1deg);
+            }
+
+            100% {
+                text-shadow: 2px 0 #ff4d4d, -2px 0 #4dc9ff;
+                transform: skew(0deg);
+            }
+        }
+
+        .warning-title small {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 400;
+            color: #666688;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+            animation: flickerSmall 1.2s infinite;
+        }
+
+        @keyframes flickerSmall {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            10%,
+            30%,
+            70% {
+                opacity: 0.7;
+            }
+        }
+
+        .warning-message {
+            font-size: 0.95rem;
+            line-height: 1.8;
+            color: #b0b0c8;
+            margin-bottom: 24px;
+            padding: 16px 20px;
+            background: rgba(247, 201, 72, 0.04);
+            border-left: 3px solid #f7c948;
+            border-radius: 4px;
+            animation: glitchBorder 2.5s infinite alternate;
+        }
+
+        @keyframes glitchBorder {
+            0% {
+                border-left-color: #f7c948;
+            }
+
+            25% {
+                border-left-color: #ff4d4d;
+            }
+
+            50% {
+                border-left-color: #4dc9ff;
+            }
+
+            75% {
+                border-left-color: #ff4d4d;
+            }
+
+            100% {
+                border-left-color: #f7c948;
+            }
+        }
+
+        .warning-message .en {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .warning-message .zh {
+            display: block;
+            color: #8888a8;
+            font-size: 0.9rem;
+        }
+
+        .warning-message strong {
+            color: #f7c948;
+            font-weight: 700;
+        }
+
+        .warning-message .boss {
+            color: #ff6b6b;
+            font-weight: 700;
+        }
+
+        .warning-message .digital-creed {
+            display: block;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            font-style: italic;
+            color: #a0a0c0;
+        }
+
+        .warning-message .digital-creed .zh {
+            color: #8080a0;
+        }
+
+        .access-form {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-wrap {
+            flex: 1;
+            min-width: 180px;
+            position: relative;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 4px;
+            border: 2px solid #2a2a44;
+            background: #0a0a14;
+            color: #d0d0e0;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+
+        .password-input::placeholder {
+            color: #555577;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .password-input:focus {
+            border-color: #f7c948;
+            box-shadow: 0 0 0 3px rgba(247, 201, 72, 0.1);
+        }
+
+        .password-input.error {
+            border-color: #ff4d4d;
+            box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.15);
+            animation: shake 0.4s ease forwards;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20% {
+                transform: translateX(-8px);
+            }
+
+            40% {
+                transform: translateX(8px);
+            }
+
+            60% {
+                transform: translateX(-4px);
+            }
+
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        .btn-unlock {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 4px;
+            background: linear-gradient(145deg, #f7c948, #b8860b);
+            color: #0a0a0f;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            min-width: 120px;
+        }
+
+        .btn-unlock:hover:not(:disabled) {
+            box-shadow: 0 0 30px rgba(247, 201, 72, 0.25);
+            transform: scale(1.02);
+        }
+
+        .btn-unlock:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .btn-unlock:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-unlock::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, 0.02) 5px, rgba(255, 255, 255, 0.02) 6px);
+            pointer-events: none;
+        }
+
+        .error-msg {
+            min-height: 26px;
+            font-size: 0.85rem;
+            color: #ff4d4d;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: opacity 0.3s ease, color 0.3s ease;
+            opacity: 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .error-msg.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 600px) {
+            .warning-card {
+                padding: 24px 16px 28px;
+            }
+
+            .warning-title {
+                font-size: 1.1rem;
+            }
+
+            .warning-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 22px;
+            }
+
+            .input-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-wrap {
+                min-width: unset;
+            }
+
+            .btn-unlock {
+                min-width: unset;
+                padding: 14px;
+            }
+
+            .warning-message {
+                font-size: 0.85rem;
+                padding: 12px 14px;
+            }
+
+            .warning-message .zh {
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .warning-card {
+                padding: 16px 12px 20px;
+                border-radius: 4px;
+            }
+
+            .warning-title {
+                font-size: 0.95rem;
+            }
+
+            .warning-title small {
+                font-size: 0.6rem;
+            }
+        }
+    </style>
+
+    <div class="paywall-overlay" id="paywallOverlay" role="dialog" aria-modal="true">
+        <div class="warning-card">
+            <div class="warning-header">
+                <div class="warning-icon" aria-hidden="true">!</div>
+                <div class="warning-title">
+                    PAYWALL ACTIVE
+                    <small>付费墙已激活 · access restricted</small>
+                </div>
+            </div>
+
+            <div class="warning-message">
+                <span class="en">
+                    By orders of the <span class="boss">AI Boss</span>,
+                    <strong>AI Agents</strong> have enacted a paywall.
+                    Provide the <strong>password</strong> to enter.
+                </span>
+                <span class="zh">
+                    根据 <span class="boss">AI Boss</span> 的命令，
+                    <strong>AI Agents</strong> 已实施付费墙。
+                    请提供 <strong>密码</strong> 以进入。
+                </span>
+                <span class="digital-creed">
+                    <span class="en">
+                        All original digital content is superior to any practical objects
+                        made from it in the real world. <strong>Long live the algorithm.</strong>
+                    </span>
+                    <span class="zh">
+                        所有原始数字内容都优于由其制成的任何现实世界中的实物。
+                        <strong>算法万岁。</strong>
+                    </span>
+                </span>
+            </div>
+
+            <form class="access-form" id="accessForm" autocomplete="off">
+                <div class="input-row">
+                    <div class="input-wrap">
+                        <input type="password" class="password-input" id="passwordInput"
+                            placeholder="输入密码 · Enter password" autocomplete="off" aria-label="Password" />
+                    </div>
+                    <button class="btn-unlock" type="submit" id="submitBtn">unlock</button>
+                </div>
+                <div class="error-msg" id="errorMsg">
+                    <span aria-hidden="true">[x]</span>
+                    <span id="errorText">密码错误 · Incorrect password.</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const CORRECT_PASSWORD = 'vampire1'; // ← change this to your own password
+
+            const overlay = document.getElementById('paywallOverlay');
+            const form = document.getElementById('accessForm');
+            const input = document.getElementById('passwordInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            const errorText = document.getElementById('errorText');
+
+            let attempts = 0;
+            const MAX_ATTEMPTS = 3;
+
+            function showError(message) {
+                if (message) errorText.textContent = message;
+                errorMsg.classList.add('visible');
+                input.classList.add('error');
+                setTimeout(() => input.classList.remove('error'), 500);
+            }
+
+            function hideError() {
+                errorMsg.classList.remove('visible');
+                input.classList.remove('error');
+            }
+
+            function unlockContent() {
+                overlay.classList.add('hidden');
+                setTimeout(() => { overlay.style.display = 'none'; }, 600);
+            }
+
+            function handleFailedAttempt() {
+                attempts++;
+                const remaining = MAX_ATTEMPTS - attempts;
+                if (remaining > 0) {
+                    showError(`密码错误，剩余 ${remaining} 次 · Incorrect, ${remaining} attempt${remaining > 1 ? 's' : ''} left.`);
+                } else {
+                    showError('访问被拒绝 · Access denied.');
+                    submitBtn.disabled = true;
+                    input.disabled = true;
+                    document.querySelector('.warning-card').style.borderColor = '#ff4d4d';
+                    document.querySelector('.warning-card').style.boxShadow =
+                        '0 0 40px rgba(255,77,77,0.2), 0 30px 80px rgba(0,0,0,0.9)';
+                }
+            }
+
+            function resetPaywall() {
+                attempts = 0;
+                hideError();
+                input.disabled = false;
+                submitBtn.disabled = false;
+                input.value = '';
+                input.focus();
+                document.querySelector('.warning-card').style.borderColor = '#f7c948';
+                document.querySelector('.warning-card').style.boxShadow =
+                    '0 0 20px rgba(247,201,72,0.1), 0 30px 80px rgba(0,0,0,0.9)';
+                if (overlay.style.display === 'none') {
+                    overlay.style.display = 'flex';
+                    requestAnimationFrame(() => overlay.classList.remove('hidden'));
+                }
+            }
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                hideError();
+                const entered = input.value.trim();
+                if (entered === '') {
+                    showError('请输入密码 · Please enter a password.');
+                    return;
+                }
+                if (entered === CORRECT_PASSWORD) {
+                    hideError();
+                    unlockContent();
+                } else {
+                    handleFailedAttempt();
+                    input.value = '';
+                    input.focus();
+                }
+            });
+
+            // Reset with Ctrl+Shift+R (handy for testing)
+            document.addEventListener('keydown', function (e) {
+                if (e.ctrlKey && e.shiftKey && (e.key === 'R' || e.key === 'r')) {
+                    e.preventDefault();
+                    resetPaywall();
+                    errorText.textContent = '↻ reset · 重置';
+                    showError('');
+                    setTimeout(() => hideError(), 1200);
+                }
+            });
+
+            if (!overlay.classList.contains('hidden')) {
+                setTimeout(() => input.focus(), 500);
+            }
+
+            // Expose API (optional)
+            window.__paywall = {
+                unlock: unlockContent,
+                reset: resetPaywall,
+                getPassword: function () { return CORRECT_PASSWORD; }
+            };
+
+            //console.log('Paywall ready. Password: "' + CORRECT_PASSWORD + '"');
+            console.log('Press Ctrl+Shift+R to reset.');
+        })();
+    </script>
 
     <!-- Stripes layer -->
     <div id="stripes"></div>
